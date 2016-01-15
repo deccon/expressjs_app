@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{ title }}</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+
+	<p>Current stripe balance : ${{ balance }}</p>
+
+    <form action="/balance" method="GET">
+    	<input type="submit" value="Update Balance">
+	</form>
+  </body>
+</html>
