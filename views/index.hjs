@@ -9,8 +9,9 @@
 
 	<p>Current stripe balance : ${{ balance }}</p>
 
-    <form action="/balance" method="GET">
+    <form action="/" method="GET">
     	<input type="submit" value="Update Balance">
 	</form>
+	
   </body>
 </html>
