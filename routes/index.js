@@ -58,6 +58,17 @@ router.get('/total_declined', function(req, res, next) {
   });
 });
 
+//Endpoint to return a list of customers who have a credit card soon to expire
+router.get('/customer_expiry_alert', function(req, res, next) {
+  var customers = getAllCustomers();
+
+  customers.then(function (value) {
+    customersToAlert = getCustomerWithBadCardExpiry(value.data)
+
+    res.send(customersToAlert);
+  });
+});
+
 // retrieve all charges via Stripe API
 function getAllCharges() {
   var charges = stripe.charges.list(function(err, charges) {
@@ -67,12 +78,20 @@ function getAllCharges() {
   return charges;
 }
 
+// retrieve all costumers via Stripe API
+function getAllCustomers() {
+  var customers = stripe.customers.list(function(err, customers) {
+    // asynchronously called
+  });
+
+  return customers;
+}
+
 // filter to return only the charges in the last week
 function getChargesLastWeek(charges) {
   var chargesLastWeek = {};
 
   for (var key in charges) {
-    if (charges.hasOwnProperty(key)) {
       var dateCreated = new Date(0);
       dateCreated.setUTCSeconds(charges[0].created);
 
@@ -81,8 +100,7 @@ function getChargesLastWeek(charges) {
 
       if(dateCreated > dateLastWeek) {
         chargesLastWeek[key] = charges[key];
-      }        
-    }      
+      }              
   }
   return chargesLastWeek;
 }
@@ -103,6 +121,37 @@ function getChargesLastMonth(charges) {
     }
   }
   return chargesLastMonth;
+}
+
+//Filter customer list for thoese who have credit cards expiring within the next month 
+function getCustomerWithBadCardExpiry(customers){
+  var customersCardExpiry = {};
+
+  var dateCardExpiry = new Date();
+  var dateCurrent = new Date();
+
+  for( var key in customers ) {
+    if(customers[key].sources.data.length > 0){
+      var expiry_month = customers[key].sources.data[0].exp_month;
+      var expiry_year = customers[key].sources.data[0].exp_year;
+
+      dateCardExpiry.setMonth(expiry_month - 1);
+      dateCardExpiry.setYear(expiry_year);
+
+      //check card expiry within one month
+      if (dateCardExpiry.getYear() == dateCurrent.getYear()) {
+        var monthDifference = dateCardExpiry.getMonth() - dateCurrent.getMonth();
+
+        //expired cards won't be included
+        if (monthDifference <= 1 & monthDifference >= 0) {
+          customersCardExpiry[key] = customers[key];
+        }
+      }
+    }
+  }
+
+  return customersCardExpiry;
+
 }
 
 module.exports = router;
