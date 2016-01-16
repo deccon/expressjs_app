@@ -69,6 +69,35 @@ router.get('/customer_expiry_alert', function(req, res, next) {
   });
 });
 
+//Endpoint to return the highest paying customer based on all charges
+router.get('/highest_paying_customer', function(req, res, next) {
+
+  var charges = getAllCharges();
+
+  charges.then(function (value) {
+    charges = value.data;
+
+    charges.sort(compareAmount);
+
+      var customerId = charges[0].source.customer;
+      var customer = getCustomer(customerId);
+     
+      customer.then(function (value) {
+        res.send(value);
+      });
+    
+  });
+});
+
+function compareAmount(a,b) {
+  if (a.amount > b.amount)
+    return -1;
+  else if (a.amount < b.amount)
+    return 1;
+  else 
+    return 0;
+}
+
 // retrieve all charges via Stripe API
 function getAllCharges() {
   var charges = stripe.charges.list(function(err, charges) {
@@ -76,6 +105,15 @@ function getAllCharges() {
   });
 
   return charges;
+}
+
+// retrieve a costumer by Id via Stripe API
+function getCustomer(id) {
+  var customer = stripe.customers.retrieve(id, function(err, customer) {
+    // asynchronously called
+  });
+
+  return customer;
 }
 
 // retrieve all costumers via Stripe API
